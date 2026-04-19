@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>My Memories | Stream Your Life</title>
+  <style>
+    /* ── Reset & Variables ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0a0a0f;
+      --surface: #13131a;
+      --card: #1c1c26;
+      --border: #2a2a3a;
+      --accent: #e50914;
+      --accent2: #ff6b35;
+      --text: #e8e8f0;
+      --muted: #888899;
+      --nav-h: 56px;
+      --radius: 10px;
+      --font: 'Segoe UI', system-ui, sans-serif;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* ── Navbar ── */
+    .navbar {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: var(--nav-h);
+      background: linear-gradient(to bottom, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.7) 100%);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 12px;
+      z-index: 1000;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      transition: background 0.3s;
+    }
+    .navbar.scrolled { background: rgba(10,10,15,0.98); }
+
+    .nav-left { display: flex; align-items: center; gap: 10px; }
+
+    .hamburger-menu {
+      width: 36px; height: 36px;
+      display: flex; flex-direction: column;
+      justify-content: center; align-items: center; gap: 5px;
+      cursor: pointer; border-radius: 8px;
+      transition: background 0.2s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .hamburger-menu:active { background: rgba(255,255,255,0.1); }
+    .hamburger-menu span {
+      display: block; width: 22px; height: 2px;
+      background: var(--text); border-radius: 2px;
+      transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
+      transform-origin: center;
+    }
+    .hamburger-menu.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+    .hamburger-menu.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
+    .hamburger-menu.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+    .logo {
+      font-size: 18px; font-weight: 800;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      letter-spacing: -0.5px;
+    }
+
+    .nav-links { display: none; }
+
+    .nav-right { display: flex; align-items: center; gap: 8px; }
+
+    .search-box {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      color: var(--text);
+      padding: 6px 12px;
+      font-size: 13px;
+      width: 130px;
+      outline: none;
+      transition: all 0.2s;
+    }
+    .search-box:focus {
+      width: 160px;
+      border-color: var(--accent);
+      background: rgba(255,255,255,0.12);
+    }
+    .search-box::placeholder { color: var(--muted); }
+
+    .profile-icon {
+      width: 34px; height: 34px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 14px;
+      cursor: pointer; flex-shrink: 0;
+    }
+
+    /* ── Slide Menu ── */
+    .slide-menu {
+      position: fixed;
+      top: 0; left: 0;
+      width: min(280px, 85vw);
+      height: 100vh;
+      background: var(--surface);
+      z-index: 2000;
+      transform: translateX(-100%);
+      transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
+      border-right: 1px solid var(--border);
+      display: flex; flex-direction: column;
+      overflow-y: auto;
+    }
+    .slide-menu.open { transform: translateX(0); }
+
+    .slide-menu-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 18px 16px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(229,9,20,0.08);
+    }
+    .slide-menu-header h3 { font-size: 16px; font-weight: 700; }
+
+    .close-menu {
+      background: rgba(255,255,255,0.08);
+      border: none;
+      color: var(--text);
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      font-size: 20px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.2s;
+    }
+    .close-menu:active { background: rgba(229,9,20,0.3); }
+
+    .slide-menu-content { padding: 8px 0; }
+
+    .menu-item {
+      display: flex; align-items: center; gap: 14px;
+      padding: 14px 20px;
+      color: var(--text);
+      text-decoration: none;
+      font-size: 15px;
+      transition: background 0.15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .menu-item:active { background: rgba(229,9,20,0.15); }
+    .menu-item:hover { background: rgba(255,255,255,0.05); }
+    .menu-icon { font-size: 20px; width: 24px; text-align: center; }
+
+    .menu-divider { height: 1px; background: var(--border); margin: 8px 0; }
+
+    .menu-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.7);
+      z-index: 1999;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.3s;
+      backdrop-filter: blur(2px);
+      -webkit-backdrop-filter: blur(2px);
+    }
+    .menu-overlay.active { opacity: 1; pointer-events: all; }
+
+    /* ── Hero ── */
+    .hero {
+      position: relative;
+      height: 56vw;
+      min-height: 220px;
+      max-height: 380px;
+      overflow: hidden;
+      margin-top: var(--nav-h);
+    }
+
+    .hero-video {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .hero-overlay {
+      position: absolute; inset: 0;
+      background: linear-gradient(
+        to bottom,
+        rgba(0,0,0,0.1) 0%,
+        rgba(0,0,0,0.3) 50%,
+        rgba(10,10,15,0.95) 100%
+      );
+    }
+
+    .hero-content {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      padding: 16px;
+    }
+    .hero-content h1 {
+      font-size: clamp(20px, 5vw, 32px);
+      font-weight: 900;
+      line-height: 1.1;
+      margin-bottom: 6px;
+      text-shadow: 0 2px 8px rgba(0,0,0,0.8);
+    }
+    .hero-content p {
+      font-size: 12px;
+      color: rgba(232,232,240,0.8);
+      line-height: 1.4;
+      margin-bottom: 12px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .hero-buttons { display: flex; gap: 8px; flex-wrap: wrap; }
+
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 9px 18px;
+      border-radius: 6px;
+      font-size: 13px; font-weight: 700;
+      text-decoration: none;
+      cursor: pointer; border: none;
+      transition: all 0.2s;
+      white-space: nowrap;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary:active { background: #c8000f; transform: scale(0.97); }
+    .btn-secondary {
+      background: rgba(255,255,255,0.2);
+      color: var(--text);
+      backdrop-filter: blur(4px);
+    }
+    .btn-secondary:active { background: rgba(255,255,255,0.3); transform: scale(0.97); }
+
+    /* ── Main Content ── */
+    main { padding: 8px 0 40px; }
+
+    .content-section { margin-bottom: 32px; }
+
+    .section-title {
+      font-size: 18px; font-weight: 800;
+      padding: 0 14px;
+      margin-bottom: 12px;
+      letter-spacing: -0.3px;
+    }
+    .section-title::before {
+      content: '';
+      display: inline-block;
+      width: 3px; height: 18px;
+      background: var(--accent);
+      border-radius: 2px;
+      margin-right: 8px;
+      vertical-align: middle;
+    }
+
+    /* ── Category Filters ── */
+    .category-filters {
+      display: flex; gap: 8px;
+      padding: 0 14px 12px;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+    .category-filters::-webkit-scrollbar { display: none; }
+
+    .filter-btn {
+      flex-shrink: 0;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 12px; font-weight: 600;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      cursor: pointer;
+      transition: all 0.2s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .filter-btn.active, .filter-btn:active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    /* ── Content Row (horizontal scroll) ── */
+    .content-row {
+      display: flex; gap: 12px;
+      padding: 0 14px;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scroll-snap-type: x mandatory;
+      scrollbar-width: none;
+      padding-bottom: 4px;
+    }
+    .content-row::-webkit-scrollbar { display: none; }
+
+    /* ── Content Card ── */
+    .content-card {
+      flex-shrink: 0;
+      width: min(72vw, 240px);
+      background: var(--card);
+      border-radius: var(--radius);
+      overflow: hidden;
+      border: 1px solid var(--border);
+      scroll-snap-align: start;
+      transition: transform 0.2s;
+    }
+    .content-card:active { transform: scale(0.98); }
+
+    /* ── Card Media ── */
+    .card-media {
+      position: relative;
+      aspect-ratio: 4/3;
+      overflow: hidden;
+      background: #111;
+    }
+    .card-media img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: transform 0.4s;
+    }
+    .content-card:active .card-media img { transform: scale(1.04); }
+
+    /* FIX: video cards — remove play-overlay from covering native controls */
+    .card-media video {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    /* Only show play overlay on image cards, hide when sibling is video */
+    .card-media:has(video) .play-overlay { display: none; }
+
+    .play-overlay {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(0,0,0,0.3);
+      font-size: 28px;
+      opacity: 0;
+      transition: opacity 0.2s;
+      pointer-events: none;
+    }
+    .content-card:active .play-overlay { opacity: 1; }
+
+    /* ── Card Content ── */
+    .card-content { padding: 10px; }
+
+    .card-title {
+      font-size: 13px; font-weight: 700;
+      margin-bottom: 4px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .card-description {
+      font-size: 11px; color: var(--muted);
+      line-height: 1.4;
+      margin-bottom: 8px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    /* ── Custom Audio Player ── */
+    .custom-audio-player {
+      display: flex; align-items: center; gap: 8px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 8px;
+      padding: 7px 10px;
+      margin-bottom: 8px;
+    }
+
+    .audio-play-btn {
+      width: 30px; height: 30px; flex-shrink: 0;
+      background: var(--accent);
+      border: none; border-radius: 50%;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px;
+      transition: all 0.15s;
+      color: #fff;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .audio-play-btn:active { transform: scale(0.9); background: #c8000f; }
+    .audio-play-btn img { display: none; } /* hide broken icon */
+    .audio-play-btn::before { content: '▶'; font-size: 11px; }
+    .audio-play-btn.playing::before { content: '⏸'; }
+
+    .audio-progress-container {
+      flex: 1; height: 4px;
+      background: rgba(255,255,255,0.15);
+      border-radius: 4px;
+      position: relative;
+      cursor: pointer;
+      touch-action: none;
+    }
+    .audio-progress-bar {
+      height: 100%; width: 0%;
+      background: linear-gradient(to right, var(--accent), var(--accent2));
+      border-radius: 4px;
+      transition: width 0.1s linear;
+    }
+    .audio-progress-handle {
+      position: absolute;
+      top: 50%; right: -1px;
+      width: 10px; height: 10px;
+      background: #fff;
+      border-radius: 50%;
+      transform: translate(50%, -50%);
+      box-shadow: 0 0 4px rgba(0,0,0,0.4);
+    }
+
+    .audio-time {
+      font-size: 10px; color: var(--muted);
+      min-width: 28px; text-align: right; flex-shrink: 0;
+    }
+
+    .card-meta {
+      display: flex; gap: 8px;
+      font-size: 11px; color: var(--muted);
+    }
+
+    /* ── Scrollbar for desktop ── */
+    @media (min-width: 600px) {
+      .content-row { padding: 0 20px; }
+      .content-card { width: 220px; }
+      .section-title { padding: 0 20px; font-size: 20px; }
+      .category-filters { padding: 0 20px 12px; }
+      .hero { max-height: 500px; }
+      .hero-content { padding: 24px; }
+      .hero-content p { -webkit-line-clamp: 3; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navigation -->
+  <nav class="navbar" id="navbar">
+    <div class="nav-left">
+      <div class="hamburger-menu" id="hamburgerMenu">
+        <span></span><span></span><span></span>
+      </div>
+      <div class="logo">MyMemories</div>
+    </div>
+    <div class="nav-links"></div>
+    <div class="nav-right">
+      <input type="text" class="search-box" placeholder="Search...">
+      <div class="profile-icon">M</div>
+    </div>
+  </nav>
+
+  <!-- Mobile Slide Menu -->
+  <div class="slide-menu" id="slideMenu">
+    <div class="slide-menu-header">
+      <h3>Navigation</h3>
+      <button class="close-menu" id="closeMenu">&times;</button>
+    </div>
+    <div class="slide-menu-content">
+      <a href="#family" class="menu-item" onclick="closeSlideMenu()"><span class="menu-icon">👨‍👩‍👧‍👦</span><span>Family Adventures</span></a>
+      <a href="#friends" class="menu-item" onclick="closeSlideMenu()"><span class="menu-icon">👥</span><span>Friends & Fun</span></a>
+      <a href="#trending" class="menu-item" onclick="closeSlideMenu()"><span class="menu-icon">🔥</span><span>Trending Now</span></a>
+      <div class="menu-divider"></div>
+      <a href="#" class="menu-item"><span class="menu-icon">⚙️</span><span>Settings</span></a>
+      <a href="#" class="menu-item"><span class="menu-icon">👤</span><span>Profile</span></a>
+    </div>
+  </div>
+  <div class="menu-overlay" id="menuOverlay" onclick="closeSlideMenu()"></div>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <video class="hero-video" autoplay muted loop playsinline
+      poster="https://picsum.photos/800/400?random=99">
+      <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" type="video/mp4">
+    </video>
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+      <h1>Your Life, Your Stories</h1>
+      <p>Discover, relive, and share your most precious memories. Every moment matters, every memory tells a story.</p>
+      <div class="hero-buttons">
+        <a href="#family" class="btn btn-primary">▶ Start Watching</a>
+        <a href="#trending" class="btn btn-secondary">ℹ More Info</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Content -->
+  <main>
+
+    <!-- Family Memories -->
+    <section class="content-section" id="family">
+      <h2 class="section-title">Family Adventures</h2>
+      <div class="category-filters">
+        <button class="filter-btn active" onclick="setFilter(this)">All</button>
+        <button class="filter-btn" onclick="setFilter(this)">Vacations</button>
+        <button class="filter-btn" onclick="setFilter(this)">Celebrations</button>
+        <button class="filter-btn" onclick="setFilter(this)">Everyday</button>
+      </div>
+      <div class="content-row">
+
+        <div class="content-card">
+          <div class="card-media">
+            <img src="https://picsum.photos/400/300?random=1" alt="Family Memory" loading="lazy">
+            <div class="play-overlay">▶</div>
+          </div>
+          <div class="card-content">
+            <h3 class="card-title">Summer Beach Trip</h3>
+            <p class="card-description">Amazing family vacation filled with sunshine, laughter, and unforgettable moments by the ocean.</p>
+            <audio class="audio-player" preload="none">
+              <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg">
+            </audio>
+            <div class="custom-audio-player">
+              <button class="audio-play-btn"></button>
+              <div class="audio-progress-container">
+                <div class="audio-progress-bar"></div>
+                <div class="audio-progress-handle"></div>
+              </div>
+              <span class="audio-time">0:00</span>
+            </div>
+            <div class="card-meta"><span>🏖️ Vacation</span><span>⭐ 5.0</span></div>
+          </div>
+        </div>
+
+        <div class="content-card">
+          <div class="card-media">
+            <img src="https://picsum.photos/400/300?random=2" alt="Family Memory" loading="lazy">
+            <div class="play-overlay">▶</div>
+          </div>
+          <div class="card-content">
+            <h3 class="card-title">Birthday Celebration</h3>
+            <p class="card-description">A special day filled with joy, presents, and family gatherings that created lasting memories.</p>
+            <audio class="audio-player" preload="none">
+              <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3" type="audio/mpeg">
+            </audio>
+            <div class="custom-audio-player">
+              <button class="audio-play-btn"></button>
+              <div class="audio-progress-container">
+                <div class="audio-progress-bar"></div>
+                <div class="audio-progress-handle"></div>
+              </div>
+              <span class="audio-time">0:00</span>
+            </div>
+            <div class="card-meta"><span>🎂 Celebration</span><span>⭐ 4.8</span></div>
+          </div>
+        </div>
+
+        <!-- FIX: video card — removed conflicting play-overlay, added playsinline for Android -->
+        <div class="content-card">
+          <div class="card-media">
+            <video src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4"
+              controls playsinline preload="none"
+              poster="https://picsum.photos/400/300?random=30"></video>
+          </div>
+          <div class="card-content">
+            <h3 class="card-title">Adventure Time</h3>
+            <p class="card-description">Exciting outdoor adventures that brought the family closer together.</p>
+            <audio class="audio-player" preload="none">
+              <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3" type="audio/mpeg">
+            </audio>
+            <div class="custom-audio-player">
+              <button class="audio-play-btn"></button>
+              <div class="audio-progress-container">
+                <div class="audio-progress-bar"></div>
+                <div class="audio-progress-handle"></div>
+              </div>
+              <span class="audio-time">0:00</span>
+            </div>
+            <div class="card-meta"><span>🏃 Adventure</span><span>⭐ 4.9</span></div>
+          </div>
+        </div>
+
+        <div class="content-card">
+          <div class="card-media">
+            <img src="https://picsum.photos/400/300?random=3" alt="Family Memory" loading="lazy">
+            <div class="play-overlay">▶</div>
+          </div>
+          <div class="card-content">
+            <h3 class="card-title">Holiday Magic</h3>
+            <p class="card-description">Festive celebrations and holiday traditions that make each year special.</p>
+            <audio class="audio-player" preload="none">
+              <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3" type="audio/mpeg">
+            </audio>
+            <div class="custom-audio-player">
+              <button class="audio-play-btn"></button>
+              <div class="audio-progress-container">
+                <div class="audio-progress-bar"></div>
+                <div class="audio-progress-handle"></div>
+              </div>
+              <span class="audio-time">0:00</span>
+            </div>
+            <div class="card-meta"><span>🎄 Holiday</span><span>⭐ 5.0</span></div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Friends Section -->
+    <section class="content-section" id="friends">
+      <h2 class="section-title">Friends & Fun</h2>
+      <div class="content-row">
+
+        <div class="content-card">
+          <div class="card-media">
+            <img src="https://picsum.photos/400/300?random=4" alt="Friends Memory" loading="lazy">
+            <div class="play-overlay">▶</div>
+          </div>
+          <div class="card-content">
+            <h3 class="card-title">Reunion Vibes</h3>
+            <p class="card-description">Getting back together with old friends and creating new memories while reminiscing about the past.</p>
+            <audio class="audio-player" preload="none">
+              <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3" type="audio/mpeg">
+            </audio>
+            <div class="custom-audio-player">
+              <button class="audio-play-btn"></button>
+              <div class="audio-progress-container">
+                <div class="audio-progress-bar"></div>
+                <div class="audio-progress-handle"></div>
+              </div>
+              <span class="audio-time">0:00</span>
+            </div>
+            <div class="card-meta"><span>👥 Reunion</span><span>⭐ 4.7</span></div>
+          </div>
+        </div>
+
+        <div class="content-card">
+          <div class="card-media">
+            <img src="https://picsum.photos/400/300?random=5" alt="Friends Memory" loading="lazy">
+            <div class="play-overlay">▶</div>
+          </div>
+          <div class="card-content">
+            <h3 class="card-title">Late Night Adventures</h3>
+            <p class="card-description">Spontaneous midnight escapades that turned into legendary stories.</p>
+            <audio class="audio-player" preload="none">
+              <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-6.mp3" type="audio/mpeg">
+            </audio>
+            <div class="custom-audio-player">
+              <button class="audio-play-btn"></button>
+              <div class="audio-progress-container">
+                <div class="audio-progress-bar"></div>
+                <div class="audio-progress-handle"></div>
+              </div>
+              <span class="audio-time">0:00</span>
+            </div>
+            <div class="card-meta"><span>🌙 Late Night</span><span>⭐ 4.9</span></div>
+          </div>
+        </div>
+
+        <div class="content-card">
+          <div class="card-media">
+            <video src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4"
+              controls playsinline preload="none"
+              poster="https://picsum.photos/400/300?random=31"></video>
+          </div>
+          <div class="card-content">
+            <h3 class="card-title">Road Trip Chronicles</h3>
+            <p class="card-description">Epic road trips with friends, discovering new places and making memories along the way.</p>
+            <audio class="audio-player" preload="none">
+              <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-7.mp3" type="audio/mpeg">
+            </audio>
+            <div class="custom-audio-player">
+              <button class="audio-play-btn"></button>
+              <div class="audio-progress-container">
+                <div class="audio-progress-bar"></div>
+                <div class="audio-progress-handle"></div>
+              </div>
+              <span class="audio-time">0:00</span>
+            </div>
+            <div class="card-meta"><span>🚗 Road Trip</span><span>⭐ 5.0</span></div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Trending -->
+    <section class="content-section" id="trending">
+      <h2 class="section-title">Trending Now</h2>
+      <div class="content-row">
+
+        <div class="content-card">
+          <div class="card-media">
+            <img src="https://picsum.photos/400/300?random=6" alt="Trending Memory" loading="lazy">
+            <div class="play-overlay">▶</div>
+          </div>
+          <div class="card-content">
+            <h3 class="card-title">Viral Moment</h3>
+            <p class="card-description">That one moment that became a legend among friends and family.</p>
+            <audio class="audio-player" preload="none">
+              <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3" type="audio/mpeg">
+            </audio>
+            <div class="custom-audio-player">
+              <button class="audio-play-btn"></button>
+              <div class="audio-progress-container">
+                <div class="audio-progress-bar"></div>
+                <div class="audio-progress-handle"></div>
+              </div>
+              <span class="audio-time">0:00</span>
+            </div>
+            <div class="card-meta"><span>🔥 Trending</span><span>⭐ 4.8</span></div>
+          </div>
+        </div>
+
+        <div class="content-card">
+          <div class="card-media">
+            <img src="https://picsum.photos/400/300?random=7" alt="Trending Memory" loading="lazy">
+            <div class="play-overlay">▶</div>
+          </div>
+          <div class="card-content">
+            <h3 class="card-title">Milestone Celebration</h3>
+            <p class="card-description">Important life achievements and milestones worth celebrating and remembering forever.</p>
+            <audio class="audio-player" preload="none">
+              <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-9.mp3" type="audio/mpeg">
+            </audio>
+            <div class="custom-audio-player">
+              <button class="audio-play-btn"></button>
+              <div class="audio-progress-container">
+                <div class="audio-progress-bar"></div>
+                <div class="audio-progress-handle"></div>
+              </div>
+              <span class="audio-time">0:00</span>
+            </div>
+            <div class="card-meta"><span>🏆 Milestone</span><span>⭐ 5.0</span></div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    // ── Hamburger / Slide Menu ──
+    const hamburger = document.getElementById('hamburgerMenu');
+    const slideMenu = document.getElementById('slideMenu');
+    const menuOverlay = document.getElementById('menuOverlay');
+
+    hamburger.addEventListener('click', () => {
+      const open = slideMenu.classList.toggle('open');
+      hamburger.classList.toggle('open', open);
+      menuOverlay.classList.toggle('active', open);
+      document.body.style.overflow = open ? 'hidden' : '';
+    });
+
+    function closeSlideMenu() {
+      slideMenu.classList.remove('open');
+      hamburger.classList.remove('open');
+      menuOverlay.classList.remove('active');
+      document.body.style.overflow = '';
+    }
+    document.getElementById('closeMenu').addEventListener('click', closeSlideMenu);
+
+    // ── Navbar scroll shadow ──
+    window.addEventListener('scroll', () => {
+      document.getElementById('navbar').classList.toggle('scrolled', window.scrollY > 50);
+    }, { passive: true });
+
+    // ── Category filter buttons ──
+    function setFilter(btn) {
+      btn.closest('.category-filters').querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    }
+
+    // ── Audio Players ──
+    // Only one audio plays at a time (Android best practice)
+    let currentAudio = null;
+    let currentBtn = null;
+
+    function formatTime(sec) {
+      if (!isFinite(sec)) return '0:00';
+      const m = Math.floor(sec / 60);
+      const s = Math.floor(sec % 60);
+      return m + ':' + String(s).padStart(2, '0');
+    }
+
+    document.querySelectorAll('.content-card').forEach(card => {
+      const audio = card.querySelector('.audio-player');
+      const btn = card.querySelector('.audio-play-btn');
+      const bar = card.querySelector('.audio-progress-bar');
+      const handle = card.querySelector('.audio-progress-handle');
+      const timeEl = card.querySelector('.audio-time');
+      const progressContainer = card.querySelector('.audio-progress-container');
+
+      if (!audio || !btn) return;
+
+      // Play / Pause toggle
+      btn.addEventListener('click', () => {
+        if (currentAudio && currentAudio !== audio) {
+          currentAudio.pause();
+          if (currentBtn) currentBtn.classList.remove('playing');
+        }
+        if (audio.paused) {
+          audio.play().catch(() => {});
+          btn.classList.add('playing');
+          currentAudio = audio;
+          currentBtn = btn;
+        } else {
+          audio.pause();
+          btn.classList.remove('playing');
+        }
+      });
+
+      // Progress update
+      audio.addEventListener('timeupdate', () => {
+        if (!audio.duration) return;
+        const pct = (audio.currentTime / audio.duration) * 100;
+        bar.style.width = pct + '%';
+        timeEl.textContent = formatTime(audio.currentTime);
+      });
+
+      // Duration loaded
+      audio.addEventListener('loadedmetadata', () => {
+        timeEl.textContent = formatTime(audio.duration);
+      });
+
+      // Ended
+      audio.addEventListener('ended', () => {
+        btn.classList.remove('playing');
+        bar.style.width = '0%';
+        timeEl.textContent = '0:00';
+        currentAudio = null;
+        currentBtn = null;
+      });
+
+      // Seek on tap/click
+      function seek(e) {
+        const rect = progressContainer.getBoundingClientRect();
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+        if (audio.duration) {
+          audio.currentTime = ratio * audio.duration;
+        }
+      }
+      progressContainer.addEventListener('click', seek);
+      progressContainer.addEventListener('touchstart', seek, { passive: true });
+    });
+
+    // ── Pause audio when menu item tapped (navigation) ──
+    document.querySelectorAll('.menu-item').forEach(item => {
+      item.addEventListener('click', () => {
+        if (currentAudio) {
+          currentAudio.pause();
+          if (currentBtn) currentBtn.classList.remove('playing');
+          currentAudio = null; currentBtn = null;
+        }
+      });
+    });
+  </script>
+</body>
+</html>
